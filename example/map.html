@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地図とp5.jsの表示</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+        body {
+            height: 100vh;
+            width: 60vw;
+        }
+        
+        #map {
+            height: 100%;
+            width: 60vw;
+        }
+
+
+        .leaflet-popup-content-wrapper {
+            /*width: 100px;  /* ポップアップの幅を100pxに設定 */
+            /*height: 25px;
+            /*max-height: 25px;  /* ポップアップの最大高さを50pxに設定 */
+            overflow: auto;  /* コンテンツがオーバーフローした場合、スクロールバーを表示 */
+            border-radius: 8px;
+            
+            /*box-shadow: 1px;*/
+        }
+        .leaflet-popup-content-wrapper,
+        .leaflet-popup-tip {
+            background: white;
+            border-color: #3c3c3c;
+            opacity: 0.9;
+   
+        }
+
+        .leaflet-popup-content {
+            
+            font: 8pt monospace;
+            opacity: 1;
+            line-height: 1.5em;
+        }
+
+        a.leaflet-popup-close-button {
+            color: #3c3c3c !important;
+            font-size: 12px !important;         /* アイコンのサイズ */
+            width: 10px !important;             /* ボタンの幅 */
+            height: 10px !important;            /* ボタンの高さ */
+        }
+
+        .leaflet-popup-content-wrapper {
+        border-width: 0px;
+        border-style: solid;
+        }
+
+        .leaflet-popup-tip-container {
+        margin-top: -6px;
+        height: 20px;
+        }
+
+        .leaflet-popup-tip {
+            opacity: 1;
+            border-style: solid;
+            border-width: 0 0px 0px 0;
+            box-shadow: none;
+        }
+
+        /*.leaflet-control-attribution {
+            display: none;
+        }*/
+
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <!--<div id="p5Canvas"></div>-->
+
+
+    <script>
+        // Leafletの地図を初期化
+        var map = L.map('map', {
+            center: [37.5, 138],
+            zoom: 5,
+            maxBounds: [
+                [20.25, 122.56],  // 南西の座標
+                [47.55, 153.59]   // 北東の座標
+            ],
+            maxBoundsViscosity: 1.0,  // バウンドの外にドラッグする抵抗を最大に設定
+            zoomControl: false 
+        }).setView([37.5, 138], 5);  // 日本の中心にズーム
+
+        // ベースマップの追加
+        L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/blank/{z}/{x}/{y}.png', {
+            maxZoom: 12,
+            minZoom: 5,
+      	    attribution: 'Project IBaaS &copy; <a href="https:ytr0.xui.jp">@ytr0</a>'
+      	
+        }).addTo(map);
+
+        // カスタムアイコンの設定
+        var customIcon = L.icon({
+            iconUrl: 'https://icons-for-free.com/iconfiles/png/128/svg+map+map+pin+marker+pin+icon-1320184912273635197.png',
+            iconSize: [41, 41], // サイズを変更
+            iconAnchor: [12, 41],
+            popupAnchor: [-3, -41]
+        });
+
+        // 各都市の位置と名前
+        var cities = [
+            { name: "東京都北区中十条", coords: [35.7608, 139.7367] },
+            { name: "Paramecium bursaria<hr>株:HR1<br>採取地:弘前市<br>採取日:2022/05/07<br><hr>登録日:2023/07/17", coords: [35.718340, 139.772439] },  // 追加された部分
+            { name: "Paramecium bursaria<hr>株:HR1<br>採取地:弘前市<br>採取日:2022/05/07<br><hr>登録日:2023/07/17", coords: [35.4221, 136.7604] },
+            { name: "高知", coords: [33.5597, 133.5311] },
+            { name: "Paramecium bursaria<hr>株:HR1<br>採取地:弘前市<br>採取日:2022/05/07<br><hr>登録日:2023/07/17", coords: [34.6901, 135.1955] },
+            { name: "Paramecium bursaria<hr>株:KB1<br>採取地:神戸市<br>採取日:2022/05/07<br><hr>登録日:2023/07/17", coords: [35.0116, 135.7681] },
+            
+        ];
+
+        // 各都市にカスタムアイコンのピンを立てる
+        cities.forEach(city => {
+            var marker = L.marker(city.coords, {icon: customIcon}).addTo(map);
+            marker.bindPopup(city.name).openPopup();
+
+                // マーカーのクリックイベントを追加
+            marker.on('click', function() {
+                console.log(city.coords);  // クリックされたマーカーの都市名をアラートメッセージとして表示
+            });
+        });
+
+
+        // p5.jsのスケッチ
+        function setup() {
+            let canvas = createCanvas(600, 200);
+            canvas.parent('p5Canvas');  // p5Canvas要素にキャンバスを追加
+
+            // パーリンノイズの初期化
+            noiseDetail(24, 0.5);
+        }
+
+        function draw() {
+            background(255);
+
+            // パーリンノイズを使用してシグナルを生成
+            for (let x = 0; x < width; x++) {
+                let y = noise(x * 0.05 + frameCount * 0.1) * height;
+                stroke(30);
+                point(x, y);
+            }
+        }
+    </script>
+</body>
+</html>

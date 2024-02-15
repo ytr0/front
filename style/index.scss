@@ -1,0 +1,312 @@
+@use "reset";
+//@import url("https://fonts.googleapis.com/css?family=IBM+Plex+Mono|Overpass:400,600&display=swap");
+@import url('https://fonts.cdnfonts.com/css/overpass');
+:root {
+    --foreground: black;
+    --background: white;
+    --gray: rgba(0, 0, 0, 0.05);
+    --dark-gray: rgba(0, 0, 0, 0.25);
+}
+
+
+body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: monospace, "Overpass";
+
+    &.dark {
+        --foreground: rgba(255, 255, 255, 0.8);
+        --background: rgba(0, 0, 0, 0.95);
+        --gray: rgba(255, 255, 255, 0.1);
+        --dark-gray: rgba(155, 155, 155, 0.3);
+    }
+    cursor: pointer;
+
+   /* .dots-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: radial-gradient(rgba(0, 0, 0, 0.2) 1px, transparent 1px);
+      background-size: 15px 15px; /* Set the distance between dots }*/
+
+    main {
+        width: 100%;
+        height: 100%;
+        //position: absolute;
+
+
+        canvas#grid {
+          /*min-width: 100%;
+          min-height: 100%;
+            position: absolute;
+           //border: dashed #E81449 1px  ;//#2fa0f6 1px;
+           //background-image: radial-gradient(var(--dark-gray) 1px, transparent 0);
+           // javascriptでグリッド作るとSafariでは重い rgba(255,255,255,0.2)
+           background-image: radial-gradient(var(--dark-gray) 1px, transparent 0);
+           background-size: 10px 10px;
+           background-position: 5.5px 15.5px;*/
+
+           position: absolute;
+           //top: 50px;
+           //left: 15px;
+           width: 100%;
+           height: 100%;
+           background-image: radial-gradient(var(--dark-gray) 1px, transparent 0);
+           background-size: 10px 10px;
+       //    background-position: 5px 15px;
+        }
+
+        section#board {
+            min-width: 100%; 
+            min-height: 100%;
+            position: absolute;
+            //background-color: var(--gray); 
+
+            &.active {
+                user-select: none !important;
+                -moz-user-select: none !important;
+                -webkit-user-select: none !important;
+                -ms-user-select: none !important;
+            }
+
+            div#selection {
+                position: absolute;
+                background-color: var(--gray);
+            }
+
+            div.memo {
+                background-color: var(--background);
+                position: absolute;
+                min-width: 80px;
+                min-height: 80px;
+                border: 1px solid var(--foreground);
+
+                user-select: none;
+                opacity: 0.95;
+
+                &.active {
+                    user-select: auto;
+                    box-shadow: 10px 10px var(--dark-gray);
+                    user-select: none !important;
+                    -moz-user-select: none !important;
+                    -webkit-user-select: none !important;
+                    -ms-user-select: none !important;
+
+                    div.close, textarea.input {
+                        user-select: none !important;
+                        -moz-user-select: none !important;
+                        -webkit-user-select: none !important;
+                        -ms-user-select: none !important;
+                    }
+                }
+                div.menu {
+                    position: absolute;
+                    top: 0px;
+                    right: 0px;
+                    color: var(--foreground);
+                    font-size: 16px;
+                    font-weight: thin;
+                    text-align: center;
+                    line-height: 12px;
+                    width: 16px;
+                    height: 16px;
+                    border-bottom: 1px solid var(--foreground);
+                }
+
+                div.close {
+                    position: absolute;
+                    top: 0px;
+                    left: 0px;
+                    //color: var(--foreground);
+                    color: #5c5c5c;
+                    font-size: 12px;
+                    font-weight: thin;
+                    text-align: center;
+                    line-height: 16px;
+                    width: 16px;
+                    height: 16px;
+                    border-bottom: 1px solid var(--foreground);
+                }
+
+                div.drag {
+                    cursor: grab;
+                    position: absolute;
+                    top: 0px;
+                    right: 0px;
+                    width: 100%;
+                    height: 16px;
+                    border-bottom: 1px solid var(--foreground);
+                }
+
+                div.counter {
+                    position: absolute;
+                    z-index: 1000;
+                    bottom: 10px;
+                    right: 10px;
+                    padding-inline: 3px;
+                    color: var(--foreground);
+                    background-color: var(--background);
+                    /*opacity: 0.5;*/
+                    font-size: 10px;
+                    font-weight: bold;
+                    text-align: center;
+                    line-height: 16px;
+                    //width: 18px;
+                    height: 16px;
+                    border-bottom: 1px solid var(--foreground);   
+                    //border: 2px solid var(--foreground);
+                } 
+
+
+                textarea.input {
+                    caret-color:#4d4d4d;
+
+                    position: absolute;
+                    top: 17px;
+                    left: 0px;
+                    width: calc(100% - 32px);
+                    height: calc(100% - 49px);
+                    padding: 16px;
+                    margin: 0;
+                    border: 0;
+                    outline: 0;
+                    resize: none;
+                    overflow: auto;
+                   // font-family: monospace;
+                    font-family: "Overpass", sans-serif;
+                    font-size: 13px;
+                    //font-size: 0.8rem;
+                    text-align: justify;/*　両端揃え */
+                    text-justify: inter-ideograph; /* IE用 */
+                      
+                    cursor: text;
+                    background: var(--background);
+                    color: var(--foreground);
+
+                    
+
+                    scrollbar-color:var(--foreground) transparent;
+                    scrollbar-width: thin;
+
+                    &::-webkit-scrollbar {
+                        width: 1px;
+                        height: 6px;
+                    }
+                    &::-webkit-scrollbar-track {
+                        margin-top: 8px;
+                        margin-bottom: 13px;
+                        background: transparent;
+                    }
+                    &::-webkit-scrollbar-thumb {
+                        background: var(--foreground);
+                    }
+                    &::-webkit-scrollbar-thumb:hover{
+                        background: var(--foreground);
+                    }
+                    &::-webkit-scrollbar-thumb:active{
+                        background: var(--foreground);
+                    }
+
+                    &::placeholder {
+                        color: rgba(0, 0, 0, 0.4);
+                    }
+                }
+                div.input {
+                  caret-color:#E81449;
+
+                  position: absolute;
+                  top: 17px;
+                  left: 0px;
+                  width: calc(100% - 32px);
+                  height: calc(100% - 49px);
+                  padding: 16px;
+                  margin: 0;
+                  border: 0;
+                  outline: 0;
+                  resize: none;
+                  overflow: auto;
+                  //font-family: monospace;
+                  font-family: "Overpass", sans-serif;
+                  font-size: 13px;
+                  cursor: text;
+                  background: var(--background);
+                  color: var(--foreground);
+
+                  scrollbar-color:var(--foreground) transparent;
+                  scrollbar-width: thin;
+
+                  &::-webkit-scrollbar {
+                      width: 1px;
+                      height: 6px;
+                  }
+                  &::-webkit-scrollbar-track {
+                      margin-top: 8px;
+                      margin-bottom: 13px;
+                      background: transparent;
+                  }
+                  &::-webkit-scrollbar-thumb {
+                      background: var(--foreground);
+                  }
+                  &::-webkit-scrollbar-thumb:hover{
+                      background: var(--foreground);
+                  }
+                  &::-webkit-scrollbar-thumb:active{
+                      background: var(--foreground);
+                  }
+
+                  &::placeholder {
+                      color: rgba(0, 0, 0, 0.4);
+                  }
+              }
+
+                div.resize {
+                    cursor: nw-resize;
+                    position: absolute;
+                    background-color: transparent;
+                    right: 0px;
+                    bottom: 0px;
+                    width: 6px;
+                    height: 6px;
+                    border-top: 1px solid var(--foreground);
+                    border-left: 1px solid var(--foreground);
+                }
+            }
+        }
+    }
+}
+
+
+/*nav#menu {
+  position:fixed;
+  top: 1em;
+  left: 50px;
+  z-index: 1000000;
+  user-select: none;
+}
+
+div a {
+  color: #E81449;
+  font-weight: 700;
+}
+div a:hover {
+  background-color: #fff;
+}
+
+div h1 {
+  font-weight: 700;
+  font-size: 1.2em;
+  line-height: 3em;
+}
+div h2 {
+  font-weight: 600;
+  font-size: 1em;
+  line-height: 3em;
+}
+
+div strong {
+  color: var(--foreground);
+  font-family: "Overpass", sans-serif;
+  font-weight: 700; 
+}*/

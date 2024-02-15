@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Draggable Nodes with Connectors</title>
+    <style>
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevents horizontal scrollbar due to dots */
+        }
+
+
+        .node {
+            user-select: none;
+            /*width: 100px;
+            height: 100px;*/
+            opacity: 0.8;
+            min-height: 50px;
+            min-width: 50px;
+            background-color: #fff;
+            position: absolute;
+            cursor: pointer;
+            border-radius: 8px;
+            border: 2px solid #3c3c3c;
+
+                /* 既存のスタイル */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            font-family: monospace;
+            font-size: 8pt;
+            font-weight: bold;
+            text-align: center;
+            padding: 5px; /* 余白を追加してテキストがボーダーに触れないようにする */
+        }
+
+        button {
+            z-index: 1000;
+        }
+
+        #connector {
+            position: absolute;
+            height: 2px;
+            background-color: #007bff;
+            transform-origin: top left;
+        }
+        #connectorLayer {
+            z-index: -1;  /* SVGのz-indexを設定 */
+            pointer-events: none;
+            /*pointer-events: none;  /* マウスイベントを無効にして、他の要素の操作を妨げないようにする */
+            pointer-events: visibleStroke; 
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            background-color: black;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+        }
+
+        .dot::after {
+            content: '';
+            width: 7px;
+            height: 7px;
+            background-color: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .dot.selected-dot::after {
+            content: '';
+            width: 7px;
+            height: 7px;
+            background-color: #3c3c3c;/* #007bff;*/
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+
+        #swapDataButton {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 10px;
+            background-color: #3c3c3c;
+            color: #fff;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .dots-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(rgba(0, 0, 0, 0.2) 1px, transparent 1px);
+            background-size: 15px 15px; /* Set the distance between dots */
+        }
+    </style>
+</head>
+<body>
+    <div class="dots-container"></div>
+    <!--<button id="swapDataButton">Swap Data</button>-->
+
+    <svg id="connectorLayer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+        <defs>
+            <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" overflow="visible">
+                <polygon points="0 0, 6 3, 0 6" fill="#6c6c6c" />
+            </marker>
+        </defs>
+        <path id="connector" stroke="#6c6c6c" fill="none" stroke-width="2" marker-end="url(#arrowhead)"></path>
+    </svg>
+    
+
+    <script>
+        const graphData = {
+            nodes: [
+                { id: 1, position: { top: 100, left: 100 }, size: { width: 379, height: 309 } , type:"" },
+                { id: 2, position: { top: 100, left: 300 }, size: { width: 379, height: 309 } , type:"" },
+                { id: 3, position: { top: 300, left: 150 }, size: { width: 379, height: 309 } , type:"" },
+                { id: 4, position: { top: 50, left: 550 }, size: { width: 379, height: 309 } , type:"" },
+                { id: 5, position: { top: 200, left: 750 }, size: { width: 379, height: 309 } , type:"" },
+                { id: 6, position: { top: 300, left: 550 }, size: { width: 379, height: 309 } , type:"" },
+                { id: 7, position: { top: 400, left: 350 }, size: { width: 379, height: 309 } , type:"" },
+                { id: 8, position: { top: 400, left: 750 }, size: { width: 379, height: 309 } , type:"" },
+                { id: 9, position: { top: 400, left: 950 }, size: { width: 379, height: 309 } , type:"" },
+            ],
+
+            connectors: [
+                { from: 1, to: 2, type:"" },
+                { from: 2, to: 4, type:"" },
+                { from: 4, to: 5, type:"" },
+                { from: 2, to: 6, type:"" },
+                { from: 7, to: 6, type:"" },
+                //{ from: 6, to: 8, type:"" },
+                { from: 8, to: 9, type:"" },
+                
+                // 他のコネクタデータ...
+            ]
+        };
+
+        const nodeTexts = [
+            "Start",
+            "[Generator]<br><br>Paramecium bursaria",
+            "[Environment]<br><br>temperature",
+            "[Oscillator]<br><br>HIGH / LOW",
+            "[Action]<br><br>ON/OFF：1階リビング",
+            "[Math]<br><br>SUM -> count",
+            "[Reset]<br><br>1日の終わりにリセット",
+            "if (count > 4000)",
+            "[Action]<br><br>消灯：寝室",
+        ];
+
+        function generateGraph(data) {
+            // ノードを動的に生成
+            const fromNodes = new Set(data.connectors.map(connector => connector.from));
+
+            data.nodes.forEach((node, index) => {
+                let nodeDiv = document.createElement("div");
+                nodeDiv.className = "node";
+                nodeDiv.id = "node" + node.id;
+                nodeDiv.innerHTML = nodeTexts[index];
+                nodeDiv.style.left = node.position.left + "px";
+                nodeDiv.style.top = node.position.top + "px";
+                document.body.appendChild(nodeDiv);
+
+                nodeDiv.addEventListener('mousedown', handleNodeMouseDown);
+                nodeDiv.addEventListener('mousemove', handleNodeMouseMove);
+                nodeDiv.addEventListener('mouseup', handleNodeMouseUp);
+
+                // 左側のドット
+                const leftDot = document.createElement("div");
+                leftDot.className = "dot";
+                leftDot.id = "left-dot" + node.id;
+                leftDot.style.left = -10 + "px";
+                leftDot.style.top = "50%";
+                nodeDiv.appendChild(leftDot);
+
+                // 右側のドット
+                const rightDot = document.createElement("div");
+                rightDot.className = "dot";
+                rightDot.id = "right-dot" + node.id;
+                rightDot.style.right = -20 + "px";
+                rightDot.style.top = "50%";
+                nodeDiv.appendChild(rightDot);
+
+                // このノードがfromNodesに含まれていない場合、左側のドットを非表示にする
+                if (!fromNodes.has(node.id)) {
+                    leftDot.style.display = 'none';
+                }
+            });
+
+            // コネクタを動的に生成
+            data.connectors.forEach((connectorData, index) => {
+                let connector = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                connector.id = "connector" + index;  // 一意のIDを割り当て
+                connector.setAttribute("stroke", "#6c6c6c"); 
+                connector.setAttribute("fill", "none");     
+                connector.setAttribute("stroke-width", "2");
+                connector.setAttribute("marker-end", "url(#arrowhead)"); 
+                //connector.addEventListener("dblclick", handleConnectorDoubleClick);  // ダブルクリックイベントを追加
+                connectorLayer.appendChild(connector);
+            });
+
+            //    dot.addEventListener("click", handleDotClick);
+            //    document.body.appendChild(dot);  
+
+            data.nodes.forEach((node, index) => {
+                const leftDot = document.getElementById("left-dot" + node.id);
+                const rightDot = document.getElementById("right-dot" + node.id);
+                leftDot.addEventListener("click", handleDotClick);
+                rightDot.addEventListener("click", handleDotClick);
+                
+            });
+
+            // すべてのコネクタの位置を更新
+            updateAllConnectors();
+        }
+
+        function updateAllConnectors() {
+            graphData.connectors.forEach((connectorData, index) => {
+                let fromNode = document.getElementById("node" + connectorData.from);
+                let toNode = document.getElementById("node" + connectorData.to);
+                let connector = document.getElementById("connector" + index);
+                updateConnectorPath(fromNode, toNode, connector);
+            });
+        }
+
+        function updateConnectorPath(node1, node2, connector) {  // 引数にconnectorを追加
+            let rect1 = node1.getBoundingClientRect();
+            let rect2 = node2.getBoundingClientRect();
+
+            let margin = 10;
+            let x1 = rect1.left + rect1.width + margin;  // + rect1.width / 2 + rect1.width / 2;
+            let y1 = rect1.top + rect1.height / 2;
+            let x2 = rect2.left - margin; //+ rect2.width / 2 - rect2.width / 2;
+            let y2 = rect2.top + rect2.height / 2;
+
+            // ベジェ曲線の制御点を計算
+            let cx1 = x1 + (x2 - x1) / 2;
+            let cy1 = y1;
+            let cx2 = x1 + (x2 - x1) / 2;
+            let cy2 = y2;
+
+            // ベジェ曲線の中点を計算
+            let t = 0.5;
+            let B0_t = Math.pow(1 - t, 3);
+            let B1_t = 3 * t * Math.pow(1 - t, 2);
+            let B2_t = 3 * Math.pow(t, 2) * (1 - t);
+            let B3_t = Math.pow(t, 3);
+            
+            let midX = B0_t * x1 + B1_t * cx1 + B2_t * cx2 + B3_t * x2;
+            let midY = B0_t * y1 + B1_t * cy1 + B2_t * cy2 + B3_t * y2;
+
+            // ベジェ曲線の勾配を計算
+            let dx = 3 * (1 - t) * (1 - t) * (cx1 - x1) + 6 * (1 - t) * t * (cx2 - cx1) + 3 * t * t * (x2 - cx2);
+            let dy = 3 * (1 - t) * (1 - t) * (cy1 - y1) + 6 * (1 - t) * t * (cy2 - cy1) + 3 * t * t * (y2 - cy2);
+            
+            // 矢印のベクトルの正規化
+            let length = Math.sqrt(dx * dx + dy * dy);
+            dx /= length;
+            dy /= length;
+
+            // 正規化したベクトルを使用して矢印の位置を計算
+            let arrowLength = 5;  // 矢印の長さ
+            let arrowX = midX + arrowLength * dx;
+            let arrowY = midY + arrowLength * dy;
+
+            // ベジェ曲線と矢印を含むパスを生成
+            let pathData = `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2} M ${midX} ${midY} L ${arrowX} ${arrowY}`;
+            connector.setAttribute("opacity", "0.8");
+            connector.setAttribute("d", pathData);
+            // ベジェ曲線のパスを生成
+            //let pathData = `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`;
+            //connector.setAttribute("d", pathData);  // この行を修正
+        }
+
+        function removeAllNodesAndConnectors() {
+            // ノードとコネクタをすべて削除
+            const nodes = document.querySelectorAll(".node");
+            const connectors = document.querySelectorAll("path[id^='connector']");
+            const dots = document.querySelectorAll(".dot");
+
+            nodes.forEach(node => node.remove());
+            connectors.forEach(connector => connector.remove());
+            dots.forEach(dots => dots.remove());
+        }
+
+        function updateNodePositionInData(nodeId, x, y) {
+            const node = graphData.nodes.find(n => n.id === nodeId);
+            if (node) {
+                node.position.left = x;
+                node.position.top = y;
+            }
+        }
+
+
+        function handleDotClick(event) {
+            const clickedDot = event.target;
+            const clickedNodeId = parseInt(clickedDot.id.replace('left-dot', '').replace('right-dot', ''));
+
+            const selectedDots = document.querySelectorAll(".selected-dot");
+            const numSelectedDots = selectedDots.length;
+
+            if (numSelectedDots === 0) {
+                // 最初に選択されたドットの場合、クリックされたドットを選択状態にする
+                clickedDot.classList.add("selected-dot");
+            } else if (numSelectedDots === 1) {
+                // 2番目に選択されたドットの場合、新しいコネクタを追加
+                const fromNodeId = parseInt(selectedDots[0].id.replace('left-dot', '').replace('right-dot', ''));
+                const toNodeId = clickedNodeId;
+
+                if (fromNodeId !== toNodeId) {
+                    // fromとtoが異なる場合のみ新しいコネクタを追加
+                    graphData.connectors.push({ from: fromNodeId, to: toNodeId });
+
+                    // コネクタを再描画
+                    removeAllNodesAndConnectors();
+                    generateGraph(graphData);
+                }
+
+                // 選択状態をリセット
+            //  selectedDots.forEach(dot => dot.classList.remove("selected-dot"));
+            }
+        }
+
+        function saveNodePositions() {
+            const nodePositions = {};
+            graphData.nodes.forEach(node => {
+                const nodeElement = document.getElementById(`node${node.id}`);
+                if (nodeElement) {
+                    nodePositions[node.id] = {
+                        top: nodeElement.style.top,
+                        left: nodeElement.style.left
+                    };
+                }
+            });
+            localStorage.setItem('nodePositions', JSON.stringify(nodePositions));
+        }
+
+        function loadNodePositions() {
+            const nodePositions = JSON.parse(localStorage.getItem('nodePositions'));
+            if (nodePositions) {
+                graphData.nodes.forEach(node => {
+                    if (nodePositions[node.id]) {
+                        node.position = nodePositions[node.id];
+                    }
+                });
+            }
+        }
+
+
+
+        function swapData(newGraphData) {
+            // ノードデータを入れ替え
+            graphData.nodes.forEach((node, index) => {
+                node.x = newGraphData.nodes[index].x;
+                node.y = newGraphData.nodes[index].y;
+            });
+
+            // コネクタデータを入れ替え
+            graphData.connectors.forEach((connector, index) => {
+                connector.from = newGraphData.connectors[index].from;
+                connector.to = newGraphData.connectors[index].to;
+            });
+        }
+       
+        let draggedNode = null;
+        let offsetX, offsetY;
+
+        function handleNodeMouseDown(e) {
+            draggedNode = e.target;
+            offsetX = e.clientX - draggedNode.getBoundingClientRect().left;
+            offsetY = e.clientY - draggedNode.getBoundingClientRect().top;
+        }
+
+        function handleNodeMouseMove(e) {
+            if (draggedNode) {
+                const nodeId = parseInt(draggedNode.id.replace('node', ''));
+                const x = e.clientX - offsetX;
+                const y = e.clientY - offsetY;
+                updateNodePositionInData(nodeId, x, y);
+                draggedNode.style.left = x + 'px';
+                draggedNode.style.top = y + 'px';
+                const nodeRect = draggedNode.getBoundingClientRect();
+                const dots = document.querySelectorAll(`.dot[data-node-id="${nodeId}"]`);
+                dots.forEach(dot => {
+                    dot.style.left = nodeRect.left + nodeRect.width / 2 + 'px';
+                    dot.style.top = nodeRect.top + nodeRect.height / 2 + 'px';
+                });
+                updateAllConnectors();
+            }
+        }
+
+        function handleNodeMouseUp() {
+            // 既存のロジックに加えて、ノードの位置を保存
+            saveNodePositions();
+            draggedNode = null;
+        }
+
+
+       /* document.getElementById("swapDataButton").addEventListener("click", () => {
+            // 新しいデータを生成
+            const newGraphData = {
+                nodes: [
+                    { id: 1, x: 200, y: 200 },
+                    { id: 2, x: 400, y: 100 },
+                    { id: 3, x: 150, y: 400 },
+                    { id: 4, x: 600, y: 300 },
+                    { id: 5, x: 750, y: 100 },
+                    // 他のノードデータ...
+                ],
+                connectors: [
+                    { from: 1, to: 3 },
+                    { from: 2, to: 4 },
+                    { from: 3, to: 5 }
+                    // 他のコネクタデータ...
+                ]
+            };
+
+            // データを入れ替える処理
+            swapData(newGraphData);
+
+            // グラフを再描画
+            removeAllNodesAndConnectors();
+            generateGraph(graphData);
+        }); */
+
+        function blink(){
+            const connector = document.getElementById("connector0");
+            if (connector) {
+                let opacity = 1;
+                const fadeOut = () => {
+                    opacity -= 0.2;
+                    connector.style.opacity = opacity.toString();
+                    if (opacity > 0) {
+                        requestAnimationFrame(fadeOut);
+                    } else {
+                        fadeIn();
+                    }
+                };
+                const fadeIn = () => {
+                    opacity += 0.2;
+                    connector.style.opacity = opacity.toString();
+                    if (opacity < 1) {
+                        requestAnimationFrame(fadeIn);
+                    }
+                };
+                fadeOut();
+            }
+        }
+
+
+        /*
+            コネクタータイプもそうだが、ノードのINとOUTに
+            繋げられるコネクタの数も指定する必要があるかも。
+        */
+        document.addEventListener("DOMContentLoaded", function() {
+            // ボタンを作成してページに追加
+            const button = document.createElement("button");
+            button.textContent = "Blink Connector";
+            document.body.appendChild(button);
+
+            // ボタンクリックイベントハンドラー
+            button.addEventListener("click", function() {
+                // 明滅させるコネクタのID
+                const connectorId = "connector0";
+                const connector = document.getElementById(connectorId);
+                if (connector) {
+                    // コネクタを一瞬非表示にする
+                    connector.style.opacity = "0";
+                    setTimeout(function() {
+                        // コネクタを再表示する
+                        connector.style.opacity = "1";
+                    }, 100); // 100ミリ秒後に実行
+                }
+            });
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            // ページ読み込み時にノードの位置情報を復元
+            loadNodePositions();
+            main();
+        });
+
+        function main() {
+            generateGraph(graphData);
+        }
+
+        //main();
+
+    </script>
+</body>
+</html>

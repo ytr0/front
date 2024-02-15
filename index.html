@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./style/main.css">
+    <title>《  IBaaS Platform for paramekos 》</title>
+    <style>
+
+    </style>
+    <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">-->
+</head>
+
+<body>
+   
+    <div class="menu-bar">
+        <div class="menu-item">《A Platform for paramekos, based on IBaaS》</div>
+    </div>
+
+    <!-- Project Selection Column -->
+    <div class="main-container">
+
+        <div class="project-column">
+            <div class="section-header"># General</div>
+            <div class="general">
+                <div class="general-item">Summary</div>
+                <div class="general-item">Project Map</div>
+            </div>
+            <hr>
+            <div class="section-header" onclick="toggleProjects()"># Projects <span class="arrowhead"></span></div>
+            <div class="project-item">P1: Lighting Control 1</div>
+            <div class="project-item">P2: Lighting Control 2</div>
+            <div class="project-item">P3: Lighting Control 3</div>
+
+            <div class="section-header" onclick="toggleDevices()"># Your Devices <span class="arrowhead"></span></div>
+            <div class="project-item">D1: paramekos (d01)</div>
+            <div class="project-item">D2: paramekos (d02)</div>
+            <div class="project-item">D3: paramekos (d03)</div>
+            <div class="project-item">D4: paramekos (d04)</div>
+            <div class="project-item">D5: paramekos (d05)</div>
+            <div class="project-item">D6: paramekos (d06)</div>
+            <div class="project-item">D7: paramekos (d07)</div>
+            <div class="project-item">D8: paramekos (d08)</div>
+            <div class="project-item">D9: paramekos (d09)</div>
+        </div>
+    
+        <!-- Main Content Area -->
+        <div class="content-area">
+            <iframe id="contentAreaFrame" class="content-area-frame" sandbox="allow-scripts allow-same-origin"></iframe>
+        </div>
+    </div>
+
+
+
+
+    <!-- Your existing scripts -->
+    <script>
+
+        function loadMainContent(overviewName) {
+            const iframe = document.getElementById("contentAreaFrame");
+            const items = document.querySelectorAll('.general-item, .project-item'); // 全てのメニュー項目を取得
+            items.forEach(item => {
+                if (item.textContent === overviewName) {
+                    item.classList.add('selected-item'); // 選択された項目にクラスを追加
+                } else {
+                    item.classList.remove('selected-item'); // 他の項目からはクラスを削除
+                }
+            });
+
+            switch (overviewName) {
+                case "Summary":
+                    iframe.src = "http://34.84.182.36/init/"; // 適切なパスを設定
+                    break;
+                case "Project Map":
+                   // iframe.src = "./components/project-map.html"; // 適切なパスを設定
+                    iframe.src = "http://34.84.182.36/init/";
+                    break;
+                case "DEFAULT":
+                    iframe.src = "./components/board.html"; // デフォルトのパスを設定
+                    break;
+                // Add more cases as needed
+                case "P1: Lighting Control 1":
+                    iframe.src = "./components/bioIxd.html";
+                    break;
+                case "P2: Lighting Control 2":
+                    iframe.src = "./components/bioIxd.html";
+                    break;
+                case "P3: Lighting Control 3":
+                    iframe.src = "./components/bioIxd.html";
+                    break;
+                case "P4: Lighting Control 4":
+                    iframe.src = "./components/bioIxd.html";
+                    break;
+                default:
+                    iframe.src = "https://example.com/default";
+                    break;
+                // 他のケースも同様に追加
+            }
+        }
+
+        document.querySelectorAll('.general-item').forEach(item => {
+            item.addEventListener('click', function() {
+                loadMainContent(item.textContent);
+                
+                // contentAreaFrameを表示
+                document.getElementById('contentAreaFrame').style.display = 'block';
+
+                // タブバーを非表示
+                document.querySelector('.tab-bar').style.display = 'none';
+            });
+        });
+
+                // すべてのproject-itemに対してクリックイベントを追加
+        document.querySelectorAll('.project-item').forEach(item => {
+            item.addEventListener('click', function() {
+                // contentAreaFrameを非表示
+                document.getElementById('contentAreaFrame').style.display = 'none';
+                
+                // タブバーを表示
+                document.querySelector('.tab-bar').style.display = 'flex';
+            });
+        });
+
+
+        let projectsExpanded = true; 
+        let devicesExpanded = true;
+
+        function toggleProjects() {
+            const projects = document.querySelectorAll('.project-item');
+            const arrowhead = document.querySelector('.arrowhead');
+
+            if (projectsExpanded) {
+                projects.forEach(project => project.style.display = 'none');
+                arrowhead.classList.add('closed');
+            } else {
+                projects.forEach(project => project.style.display = 'block');
+                arrowhead.classList.remove('closed');
+            }
+
+            projectsExpanded = !projectsExpanded;
+        }
+        /*function toggleDevices() {
+            const devices = document.querySelectorAll('.project-item');
+            const arrowhead = document.querySelector('.arrowhead');
+
+            if (devicesExpanded) {
+                devices.forEach(project => project.style.display = 'none');
+                arrowhead.classList.add('closed');
+            } else {
+                projects.forEach(project => project.style.display = 'block');
+                arrowhead.classList.remove('closed');
+            }
+
+            devicesExpanded = !devicesExpanded;
+        }*/
+        
+
+        let currentIndex = 0; // 現在のコンテンツのインデックスを保持する変数
+        function autoChangeContent() {
+    const contents = [
+        // コンテンツのリストを定義します。
+        { name: "Summary", url: "https://example.com/about", type: "general" },
+        { name: "Project Map", url: "https://example.com/project-map", type: "general" },
+        // プロジェクトアイテムを追加
+        { name: "P1: Lighting Control", url: "./components/lighting-control.html", type: "project" },
+        { name: "P2: Game Object Control", url: "./components/game-object-control.html", type: "project" },
+        // 他のプロジェクトアイテムも同様に追加
+    ];
+    let currentIndex = 0; // 現在のコンテンツのインデックス
+
+    function updateContent() {
+        const currentContent = contents[currentIndex];
+        loadMainContent(currentContent.name); // loadMainContent関数を使用してコンテンツを読み込み
+        highlightMenuItem(currentContent.name); // 選択されたメニューアイテムをハイライト
+        currentIndex = (currentIndex + 1) % contents.length; // 次のコンテンツにインデックスを更新
+    }
+
+    setInterval(updateContent, 5000); // 5秒ごとにコンテンツを更新
+}
+
+function highlightMenuItem(selectedName) {
+    const items = document.querySelectorAll('.general-item, .project-item');
+    items.forEach(item => {
+        if (item.textContent.trim() === selectedName) {
+            item.classList.add('selected-item');
+        } else {
+            item.classList.remove('selected-item');
+        }
+    });
+}
+
+// ページの読み込みが完了したらautoChangeContent関数を呼び出します
+document.addEventListener("DOMContentLoaded", autoChangeContent);
+
+
+        // ページの読み込み完了時に自動切り替えを開始
+        document.addEventListener("DOMContentLoaded", autoChangeContent);
+
+
+        function main() {
+            loadMainContent("DEFAULT");
+           // activateTab("tab1");
+          //  
+        }
+
+        main();
+
+
+     
+    document.addEventListener("DOMContentLoaded", function() {
+        var ws = new WebSocket("ws://localhost:8000/ws");
+        ws.onopen = function(event) {
+            console.log("Connected to WebSocket");
+        };
+        ws.onmessage = function(event) {
+            console.log("Message from server:", event.data);
+        };
+        ws.onclose = function(event) {
+            console.log("Disconnected from WebSocket");
+        };
+        ws.onerror = function(error) {
+            console.log("WebSocket error:", error);
+        };
+    });
+
+    </script>
+</body>
+
+</html>
